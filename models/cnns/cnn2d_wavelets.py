@@ -5,21 +5,25 @@ import sys
 import argparse
 import tensorflow as tf
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, Lambda, Reshape
-from keras.layers import Conv2D, MaxPooling2D, BatchNormalization, Activation, LSTM, Convolution2D, GRU
+from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
 from keras import optimizers, regularizers
-from tensorflow.keras.regularizers import l2
 from tensorflow.keras.callbacks import ModelCheckpoint
 
-# LeNet-5 architecture
+
 def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape):
     '''
-    load training data and testing data, compile and train CNN model, return training history
+    load data, compile and train CNN model (LeNet-5 architecture), apply data shape trasformation for ANN inputs
     Parameters
-    Input: train_generator, test_generator
-    epochs: number of epochs for training
-    Output: training history parameters
-
+    Input: 
+        x_train, y_train - train data: qrs segments and labels
+        y_test, y_test - test data: qrs segments and labels
+        x_valid - validation data
+        numclasses - the number of classes (labels)
+        input_shape - the unput shape of the chosen ANN
+    Output: 
+        model - sequential model
+        history - training history parameters
+        x_valid - reshaped validation data
     '''
     epochs = 54
     batch_size = 368
@@ -50,7 +54,7 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
         metrics=['accuracy'])
     
     # define callbacks
-    callbacks = [ModelCheckpoint(filepath='best_model.h5', monitor='categorical_crossentropy')]
+    callbacks = [ModelCheckpoint(filepath='saved_models/wavelets_based.h5', monitor='categorical_crossentropy')]
     
     # fit the model
     history = model.fit(x=x_train,

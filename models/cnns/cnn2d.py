@@ -13,12 +13,18 @@ from tensorflow.keras.regularizers import l2
 
 def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape):
     '''
-    load training data and testing data, compile and train CNN model, return training history
+    load data, compile and train CNN model (CRNN architecture), apply data shape trasformation for ANN inputs
     Parameters
-    Input: train_generator, test_generator
-    epochs: number of epochs for training
-    Output: training history parameters
-
+    Input: 
+        x_train, y_train - train data: qrs segments and labels
+        y_test, y_test - test data: qrs segments and labels
+        x_valid - validation data
+        numclasses - the number of classes (labels)
+        input_shape - the unput shape of the chosen ANN
+    Output: 
+        model - sequential model
+        history - training history parameters
+        x_valid - reshaped validation data
     '''
     epochs = 550
 

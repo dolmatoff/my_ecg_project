@@ -10,7 +10,20 @@ from keras.callbacks import CSVLogger
 
 
 def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape):
-    
+    '''
+    load data, compile and train Recurrent model, apply data shape trasformation for ANN inputs
+    Parameters
+    Input: 
+        x_train, y_train - train data: qrs segments and labels
+        y_test, y_test - test data: qrs segments and labels
+        x_valid - validation data
+        numclasses - the number of classes (labels)
+        input_shape - the unput shape of the chosen ANN
+    Output: 
+        model - sequential model
+        history - training history parameters
+        x_valid - reshaped validation data
+    '''
     epochs = 150
 
     x_train, x_test, x_valid = map(lambda x: get_transformed_input(x), [x_train, x_test, x_valid])
