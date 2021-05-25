@@ -17,8 +17,8 @@ from models.predefined import inception1d, resnet1d
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data-1d-file', type=str, default='data/processed_cpsc/cpsc_1431_25.pkl', help='Data directory')
-    parser.add_argument('--data-2d-file', type=str, default='data/processed_cpsc/cpsc_1431_25_cwt.pkl', help='Data directory')
+    parser.add_argument('--data-1d-file', type=str, default='cpsc2018/cpsc_1145_25.pkl', help='Data directory')
+    parser.add_argument('--data-2d-file', type=str, default='cpsc2018/cpsc_1145_25_cwt.pkl', help='Data directory')
     #parser.add_argument('--data-1d-file', type=str, default='ptb_xl_data/ptb_xl_6480_14.pkl', help='Data directory')
     #parser.add_argument('--data-2d-file', type=str, default='ptb_xl_data/ptb_xl_6480_14_spectrograms.pkl', help='Data directory')
     
