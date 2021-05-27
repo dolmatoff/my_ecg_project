@@ -1,15 +1,15 @@
 import numpy as np
-import keras
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, LSTM
-from keras.layers import BatchNormalization, Activation, Bidirectional, LSTM, Convolution1D, MaxPooling1D
-
+import tensorflow.keras
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Flatten, LSTM
+from tensorflow.keras.layers import BatchNormalization, Activation, Bidirectional, LSTM, Convolution1D, MaxPooling1D
+from tensorflow.keras.callbacks import ModelCheckpoint
 import tensorflow as tf
-from keras.callbacks import EarlyStopping
-from keras.callbacks import CSVLogger
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import CSVLogger
 
 
-def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape):
+def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape, saved_model_path):
     '''
     load data, compile and train Recurrent model, apply data shape trasformation for ANN inputs
     Parameters
@@ -46,11 +46,11 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
                   optimizer=keras.optimizers.Adam(),
                   metrics=['accuracy'])
 
-    #stopping = EarlyStopping(monitor='accuracy', patience=3)
     csv_logger = CSVLogger('training_lstm1d.log', separator=',', append=True)
     reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50, min_lr=0.0001)
+    callbacks = [ModelCheckpoint(filepath=saved_model_path, monitor='categorical_crossentropy'), reduce_lr, csv_logger]
 
-    history = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=epochs, verbose=1, callbacks = [reduce_lr, csv_logger])
+    history = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=epochs, verbose=1, callbacks = callbacks)
     
     return model, history, x_valid
 

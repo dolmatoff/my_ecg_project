@@ -10,32 +10,73 @@ from data_processing.processing import *
 from models.cnns import cnn1d, cnn2d, cnn2d_2, cnn2d_wavelets
 from models.recurrent import lstm1d, lstm1d_2
 from models.predefined import inception1d, resnet1d
+from baseline import parse_args, get_based_parameters
+from data_processing.raw_data_processing import samples
 
 
 if __name__ == '__main__':
-    
-    model_file = 'saved_models/wavelets_based.h5'
-    signal_file = 'cpsc2018/cpsc_1145_25_cwt.pkl'
-    signal_1d_file = 'cpsc2018/cpsc_1145_25.pkl'
-    numclasses = 1145 #6480
-    model_name = 'cnn2d_wavelets'
-    samples_per_class = 25
 
-    model = load_model(model_file)
-    x_train, x_test, x_valid, y_train, y_test, y_valid = load_train_test_data(signal_file, True)
+    args = parse_args()
+    data, path, numclasses, model_name, saved_model_path, prefix = get_based_parameters()
+    signal_1d_file = args.data_1d_file #'cpsc2018/cpsc_1145_25.pkl'
+
+    ## Use PTB_XL data as unknown classes for CPSC 2018 dataset
+    unknown_file = 'ptb_xl_data/ptb_xl_75_25_cwt.pkl'
+    unknown_classes = 75
+    unknown_num = unknown_classes * samples
+
+    #load model
+    model = load_model(saved_model_path)
+    x_train, x_test, x_valid, y_train, y_test, y_valid = load_train_test_data(path, prefix, data)
 
     #prepare data
     y_train = np_utils.to_categorical(y_train, numclasses)
     y_test = np_utils.to_categorical(y_test, numclasses)
     y_valid_ = np_utils.to_categorical(y_valid, numclasses)
 
+    ux, uy = load_preprocessed_data(unknown_file)
+    unknown_idx = random.randint(1, unknown_num)
+
     model_space = locals()[model_name]
-    x_train, x_test, x_valid = map(lambda x: model_space.get_transformed_input(x), [x_train, x_test, x_valid])
+    x_train, x_test, x_valid, ux = map(lambda x: model_space.get_transformed_input(x), [x_train, x_test, x_valid, ux])
 
-    #load model
-    model = load_model(model_file)
-    #pred_prob = predict(model, x)
+    # check on the known and unknown data
+    ch = model.predict(x_valid)
+    errs = np.asarray([a for a in ch if max(a) < 0.98])
+    print(errs.argmax(axis=-1))
+    ch2 = model.predict(ux)
+    errs2 = np.asarray([a for a in ch2 if max(a) < 0.98])
+    print(errs2.argmax(axis=-1))
 
+    #check on the one randomly selected element
+    s_idx = random.randint(1, x_valid.shape[0])
+    s_x = x_valid[s_idx]
+    s_x = s_x.reshape(1, s_x.shape[0], s_x.shape[1], 1)
+    s_result = model.predict(s_x)
+    if(s_result.max() > 0.99) : 
+        s_predicted = s_result.argmax(axis=-1)
+        if(y_valid[s_idx] == s_predicted) :
+            print('An existent unseen class was classified correctly.')
+        else :
+            print('An existent unseen class was classified erroneously.')
+        print('Predicted label:')
+        print(s_result.argmax(axis=-1))
+        print('Real label:')
+        print(y_valid[s_idx])
+    else :
+        print('An existent unseen class with the label '+ str(y_valid[s_idx]) + ' was rejected by mistake')
+    
+
+    u_x = ux[random.randint(1, unknown_num)]
+    u_x = u_x.reshape(1, u_x.shape[0], u_x.shape[1], 1)
+    u_result = model.predict(u_x)
+    if(u_result.max() > 0.99) : 
+        print('Error unknown class label: ')
+        print(u_result.argmax(axis=-1))
+    else :
+        print('Unknown class was rejected')
+
+    #get metrics
     try:
         y_predict = model.predict_classes(x_valid)
     except:
@@ -44,19 +85,19 @@ if __name__ == '__main__':
 
     report = classification_report(y_valid, y_predict)
 
-    #diff = np.unique(list((counter(y_predict.flatten()) - counter(y_valid.flatten())).elements()))
+    #diff = np.unique(list((Counter(y_predict.flatten()) - Counter(y_valid.flatten())).elements()))
     #print(diff)
-    #x, y = load_preprocessed_1d_data(signal_1d_file)
+    #x, y = load_preprocessed_data(signal_1d_file)
     #misclassified_y = [ i for i, x in enumerate(y) if x in diff ]
     #misclassified_x = x[misclassified_y]
-    #chunks = np.array_split(misclassified_x, samples_per_class)
+    #chunks = np.array_split(misclassified_x, samples)
     #for ch in chunks :
-    #    plt.plot(np.linspace(0, 199, 200), ch.t)
+    #    plt.plot(np.linspace(0, 199, 200), ch.T)
     #    plt.show()
 
-    cf = confusion_matrix(y_valid, y_predict)
-
+    
     ###########################################################################################################################
+    cf = confusion_matrix(y_valid, y_predict)
     TP = np.diag(cf)
     TP_SUM = TP.sum()
 

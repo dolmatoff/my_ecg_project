@@ -14,13 +14,15 @@ from matplotlib.pyplot import specgram
 import scipy
 import pickle
 import os
-from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.utils import shuffle
+from sklearn.model_selection import ShuffleSplit
 import random
 from scipy.signal import savgol_filter
 import pywt
 import skimage
 from skimage.transform import resize
 from sklearn.preprocessing import normalize
+from data_processing.raw_data_processing import samples
 
 
 def apply_smooth_filter(x) :
@@ -34,7 +36,7 @@ def apply_smooth_filter(x) :
     return xx.to_numpy()
 
 
-def load_preprocessed_1d_data(filename) :
+def load_preprocessed_data(filename) :
     """
         reads and returns X and Y sets from .pkl file
     """
@@ -43,33 +45,70 @@ def load_preprocessed_1d_data(filename) :
 
     return np.array(x), np.array(y)
 
-def load_train_test_data(filename, split_cpsc = False) :
+def load_train_test_data(path, prefix, filename) :
     '''
-    Load data from pickle file, then split data to training set, test set, validation set using StratifiedShuffleSplit class.
+    Load data from pickle file, then split data to training set, test set, validation sets.
     Input: 
+        path to the preprocessed data
+        prefix to identify the target sets
         pickle filename
-        split_cpsc - defines the share of validation set
     Output: 
-        training data, testing data, validation set
+        training data, testing data, validation set (randomly shuffled)
 
     '''
+    def getTargetName(mainPart, prefix) :
+        return os.path.join(path, mainPart + prefix + '.pkl')
+
+    if os.path.exists(getTargetName('train_', prefix)) and \
+       os.path.exists(getTargetName('test_', prefix )) and \
+       os.path.exists(getTargetName('validation_', prefix)) :
+        with open(getTargetName('train_', prefix), 'rb') as f :
+            x_train, y_train = pickle.load(f)
+        with open(getTargetName('test_', prefix ), 'rb') as f :
+            x_test, y_test = pickle.load(f)
+        with open(getTargetName('validation_', prefix), 'rb') as f :
+            x_valid, y_valid = pickle.load(f)
+    else :
+        x, y = load_preprocessed_data(filename)
+        y = y.astype(int).flatten()
+        #declare empty lists
+        x_train = np.empty((0, x.shape[1])) if prefix == '1d' else np.empty((0, x.shape[1], x.shape[2]))
+        x_test = np.empty((0, x.shape[1])) if prefix == '1d' else np.empty((0, x.shape[1], x.shape[2]))
+        x_valid=np.empty((0, x.shape[1])) if prefix == '1d' else np.empty((0, x.shape[1], x.shape[2])) 
+        y_train=[]; y_test=[]; y_valid=[]
+
+        rs_valid = ShuffleSplit(n_splits=2, test_size=0.04, train_size=0.96, random_state=42)
+        rs_test = ShuffleSplit(n_splits=2, test_size=0.125, train_size=0.875, random_state=42)
+
+        for i in range(0, y.shape[0], samples) :
+            x_row = x[i:i+samples,:] if prefix == '1d' else x[i:i+samples,:,:]
+            y_row = y[i:i+samples]
+            _, train_valid_idx = rs_valid.split(y_row)
+            _, train_test_idx = rs_test.split(y_row[train_valid_idx[0]])
+
+            x_valid = np.vstack((x_valid, x_row[train_valid_idx[1][0]]))
+            y_valid.append(y_row[train_valid_idx[1][0]])
+            x_test = np.vstack((x_test, x_row[train_test_idx[1]]))
+            y_test.extend(y_row[train_test_idx[1]])
+            x_train = np.vstack((x_train, x_row[train_test_idx[0]]))
+            y_train.extend(y_row[train_test_idx[0]])
     
-    x, y = load_preprocessed_1d_data(filename)
-    valid_part = 0.05 if split_cpsc else 0.075
-    test_part = 0.15
+        x_train, y_train = shuffle(np.asarray(x_train), np.asarray(y_train))
+        x_test, y_test = shuffle(np.asarray(x_test), np.asarray(y_test))
+        x_valid, y_valid = shuffle(np.asarray(x_valid), np.asarray(y_valid))
 
-    train_valid = StratifiedShuffleSplit(n_splits=2, test_size=valid_part, random_state=42)
-    train_test = StratifiedShuffleSplit(n_splits=2, test_size=test_part, random_state=42)
+        x_train, x_test, x_valid = map(lambda t: t.reshape(t.shape[0], t.shape[1], 1) if prefix == '1d' \
+            else t.reshape(t.shape[0], t.shape[2], t.shape[2]), [x_train, x_test, x_valid])
 
-    for train_index, val_index in train_valid.split(x, y):
-        x_train, x_valid = x[train_index], x[val_index]
-        y_train, y_valid = y[train_index], y[val_index]
-    
-    for train_index, test_index in train_test.split(x_train, y_train):
-        x_train, x_test = x[train_index], x[test_index]
-        y_train, y_test = y[train_index], y[test_index]
+        with open(getTargetName('train_', prefix), 'wb') as f:
+            pickle.dump((x_train, y_train), f)
+        with open(getTargetName('test_', prefix), 'wb') as f:
+            pickle.dump((x_test, y_test), f)
+        with open(getTargetName('validation_', prefix), 'wb') as f:
+            pickle.dump((x_valid, y_valid), f)
 
-    return x_train, x_test, x_valid, y_train.astype(int), y_test.astype(int), y_valid.astype(int)
+
+    return x_train, x_test, x_valid, y_train, y_test, y_valid
 
 
   
@@ -168,18 +207,18 @@ def _cwt(data):
 
 if __name__ == '__main__' :
    
-    #filename = 'data/processed_cpsc/cpsc_1431_25.pkl'
-    #targetFilename = 'data/processed_cpsc/cpsc_1431_25_cwt.pkl'
+    filename = 'ptb_xl_data/ptb_xl_75_25.pkl'
+    targetFilename = 'ptb_xl_data/ptb_xl_75_25_cwt.pkl'
     
-    #x, y = load_preprocessed_1d_data(filename)
-    ## convert 1d qrs segments to 2d spatial representation
-    #x_s = _cwt(x)
+    x, y = load_preprocessed_data(filename)
+    # convert 1d qrs segments to 2d spatial representation
+    x_s = _cwt(x)
 
-    ## save transformed data into .pkl file
-    #with open(targetFilename, 'wb') as f:
-    #    pickle.dump((x_s, y), f)
+    # save transformed data into .pkl file
+    with open(targetFilename, 'wb') as f:
+        pickle.dump((x_s, y), f)
 
-    filter_qrs_ptb_xl() 
+    #filter_qrs_ptb_xl() 
 
     #normalize_xy_data()
 

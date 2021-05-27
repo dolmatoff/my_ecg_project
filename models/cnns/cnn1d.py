@@ -1,15 +1,15 @@
 import numpy as np
-import keras
+import tensorflow.keras
 import pickle
 import sys
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Flatten
+from tensorflow.keras.layers import Convolution1D, MaxPooling1D, BatchNormalization, Activation
+from tensorflow.keras import optimizers, regularizers
 
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
-from keras.layers import Convolution1D, MaxPooling1D, BatchNormalization, Activation
-from keras import optimizers, regularizers
 
-
-def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape):
+def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape, saved_model_path):
     '''
     load data, compile and train CNN model, apply data shape trasformation for ANN inputs
     Parameters
@@ -51,7 +51,9 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
                   optimizer=keras.optimizers.Adam(),
                   metrics=['accuracy'])
 
-    history = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=epochs, verbose=1)
+    callbacks = [ModelCheckpoint(filepath=saved_model_path, monitor='categorical_crossentropy')]
+
+    history = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=epochs, verbose=1, callbacks = callbacks)
     
     return model, history, x_valid
 

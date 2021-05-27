@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 import wfdb
 
-from QRSDetectorOffline import QRSDetectorOffline
+from data_processing.QRSDetectorOffline import QRSDetectorOffline
 
 import pickle
 

@@ -1,16 +1,16 @@
 import numpy as np
-import keras
+import tensorflow.keras
 import pickle
 import sys
 import argparse
 import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
-from keras import optimizers, regularizers
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
+from tensorflow.keras import optimizers, regularizers
 from tensorflow.keras.callbacks import ModelCheckpoint
 
 
-def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape):
+def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape, saved_model_path):
     '''
     load data, compile and train CNN model (LeNet-5 architecture), apply data shape trasformation for ANN inputs
     Parameters

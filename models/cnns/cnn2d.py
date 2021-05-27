@@ -1,17 +1,17 @@
 import numpy as np
-import keras
+import tensorflow.keras
 import pickle
 import sys
-import argparse
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, Lambda, Reshape
-from keras.layers import Conv2D, MaxPooling2D, BatchNormalization, Activation, LSTM, Convolution2D, GRU
-from keras import optimizers, regularizers
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Lambda, Reshape
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, BatchNormalization, Activation, LSTM, Convolution2D, GRU
+from tensorflow.keras import optimizers, regularizers
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.regularizers import l2
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 
-def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape):
+def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape, saved_model_path):
     '''
     load data, compile and train CNN model (CRNN architecture), apply data shape trasformation for ANN inputs
     Parameters
@@ -67,9 +67,13 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
                   optimizer=SGD(lr=0.001),
                   metrics=['accuracy'])
 
+    callbacks = [ModelCheckpoint(filepath=saved_model_path, monitor='categorical_crossentropy')]
+
     history = model.fit(x_train, y_train,
               validation_data=(x_test, y_test),
-              epochs=epochs, verbose=1)
+              epochs=epochs, 
+              verbose=1,
+              callbacks = callbacks)
 
     return model, history, x_valid
 

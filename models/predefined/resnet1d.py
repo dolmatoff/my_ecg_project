@@ -1,14 +1,15 @@
 import numpy as np
-import keras
+import tensorflow.keras as keras
 import pickle
 import sys
-from keras import optimizers, regularizers
+from tensorflow.keras import optimizers, regularizers
 from models.predefined.ResNetModel1d import build_resnet
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 
-def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape):
+def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape, saved_model_path):
     '''
-    load data, compile and train ResNet model, apply data shape trasformation for ANN inputs
+    load data, compile and train ResNet1d model, apply data shape trasformation for ANN inputs
     Parameters
     Input: 
         x_train, y_train - train data: qrs segments and labels
@@ -35,11 +36,14 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
     model.compile(loss='categorical_crossentropy',
                   optimizer=optimizer,
                   metrics=['accuracy'])
-      
+
+    # define callbacks
     reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5,
                       patience=50, min_lr=0.0001) 
+    callbacks = [ModelCheckpoint(filepath=saved_model_path, monitor='categorical_crossentropy'), reduce_lr]
+    # train model
     history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs,
-              verbose=1, validation_data=(x_test, y_test), callbacks = [reduce_lr])
+              verbose=1, validation_data=(x_test, y_test), callbacks = callbacks)
 
     return model, history, x_valid
 

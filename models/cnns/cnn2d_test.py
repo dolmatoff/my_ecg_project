@@ -4,13 +4,10 @@ import pickle
 import sys
 
 from sklearn.metrics import confusion_matrix, classification_report
-from helper import write_matrix_to_textfile
 from matplotlib.pyplot import imread, imshow, subplots, show
 import matplotlib.pyplot as plt
 
-from data_processing import load_data_2d
-
-from keras import backend as K
+from tensorflow.keras import backend as K
 from keras import layers as L
 from keras.models import Model, Input
 from keras import optimizers, regularizers

@@ -1,16 +1,16 @@
 import numpy as np
-import keras
+import tensorflow.keras
 import pickle
 import sys
 import pandas as pd
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, LSTM
-from keras.layers import BatchNormalization, Activation, Bidirectional, LSTM, Convolution1D, MaxPooling1D
-from keras import optimizers, regularizers
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Flatten, LSTM, GlobalAveragePooling1D
+from tensorflow.keras.layers import BatchNormalization, Activation, Bidirectional, LSTM, Convolution1D, MaxPooling1D
+from tensorflow.keras import optimizers, regularizers
 import tensorflow as tf
-from keras.callbacks import EarlyStopping
-from keras.callbacks import CSVLogger
-
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import CSVLogger
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 
 def _inception_module(input_tensor, stride=1, activation='linear'):
@@ -53,7 +53,7 @@ def _shortcut_layer(input_tensor, out_tensor):
     x = keras.layers.Activation('relu')(x)
     return x
 
-def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape):
+def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape, saved_model_path):
     '''
     load data, compile and train Inception model, apply data shape trasformation for ANN inputs
     Parameters
@@ -95,9 +95,11 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
                       metrics=['accuracy'])
 
     model.summary()
+    #add callbacks
     reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50, min_lr=0.0001)
+    callbacks = [ModelCheckpoint(filepath=saved_model_path, monitor='categorical_crossentropy'), reduce_lr]
 
-    history = model.fit(x_train, y_train, batch_size=64, validation_data=(x_test, y_test), epochs=epochs, verbose=1, callbacks = [reduce_lr])
+    history = model.fit(x_train, y_train, batch_size=64, validation_data=(x_test, y_test), epochs=epochs, verbose=1, callbacks = callbacks)
     
     return model, history, x_valid
 
