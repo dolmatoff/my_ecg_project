@@ -1,10 +1,11 @@
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 import numpy as np
 import wfdb
 import sys
-from keras.utils import np_utils
+from tensorflow.keras.utils import to_categorical
 from sklearn.metrics import confusion_matrix, classification_report
 from collections import Counter
+import time
 
 from data_processing.processing import *
 from models.cnns import cnn1d, cnn2d, cnn2d_2, cnn2d_wavelets
@@ -12,7 +13,6 @@ from models.recurrent import lstm1d, lstm1d_2
 from models.predefined import inception1d, resnet1d
 from baseline import parse_args, get_based_parameters
 from data_processing.raw_data_processing import samples
-
 
 if __name__ == '__main__':
 
@@ -30,51 +30,17 @@ if __name__ == '__main__':
     x_train, x_test, x_valid, y_train, y_test, y_valid = load_train_test_data(path, prefix, data)
 
     #prepare data
-    y_train = np_utils.to_categorical(y_train, numclasses)
-    y_test = np_utils.to_categorical(y_test, numclasses)
-    y_valid_ = np_utils.to_categorical(y_valid, numclasses)
+    y_train = to_categorical(y_train, numclasses)
+    y_test = to_categorical(y_test, numclasses)
+    y_valid_ = to_categorical(y_valid, numclasses)
 
-    ux, uy = load_preprocessed_data(unknown_file)
+    #ux, uy = load_preprocessed_data(unknown_file)
+
+    # test the classificator
     unknown_idx = random.randint(1, unknown_num)
 
     model_space = locals()[model_name]
-    x_train, x_test, x_valid, ux = map(lambda x: model_space.get_transformed_input(x), [x_train, x_test, x_valid, ux])
-
-    # check on the known and unknown data
-    ch = model.predict(x_valid)
-    errs = np.asarray([a for a in ch if max(a) < 0.98])
-    print(errs.argmax(axis=-1))
-    ch2 = model.predict(ux)
-    errs2 = np.asarray([a for a in ch2 if max(a) < 0.98])
-    print(errs2.argmax(axis=-1))
-
-    #check on the one randomly selected element
-    s_idx = random.randint(1, x_valid.shape[0])
-    s_x = x_valid[s_idx]
-    s_x = s_x.reshape(1, s_x.shape[0], s_x.shape[1], 1)
-    s_result = model.predict(s_x)
-    if(s_result.max() > 0.99) : 
-        s_predicted = s_result.argmax(axis=-1)
-        if(y_valid[s_idx] == s_predicted) :
-            print('An existent unseen class was classified correctly.')
-        else :
-            print('An existent unseen class was classified erroneously.')
-        print('Predicted label:')
-        print(s_result.argmax(axis=-1))
-        print('Real label:')
-        print(y_valid[s_idx])
-    else :
-        print('An existent unseen class with the label '+ str(y_valid[s_idx]) + ' was rejected by mistake')
-    
-
-    u_x = ux[random.randint(1, unknown_num)]
-    u_x = u_x.reshape(1, u_x.shape[0], u_x.shape[1], 1)
-    u_result = model.predict(u_x)
-    if(u_result.max() > 0.99) : 
-        print('Error unknown class label: ')
-        print(u_result.argmax(axis=-1))
-    else :
-        print('Unknown class was rejected')
+    x_train, x_test, x_valid = map(lambda x: model_space.get_transformed_input(x), [x_train, x_test, x_valid])
 
     #get metrics
     try:
@@ -85,15 +51,19 @@ if __name__ == '__main__':
 
     report = classification_report(y_valid, y_predict)
 
-    #diff = np.unique(list((Counter(y_predict.flatten()) - Counter(y_valid.flatten())).elements()))
-    #print(diff)
-    #x, y = load_preprocessed_data(signal_1d_file)
-    #misclassified_y = [ i for i, x in enumerate(y) if x in diff ]
-    #misclassified_x = x[misclassified_y]
-    #chunks = np.array_split(misclassified_x, samples)
+    diff = np.unique(list((Counter(y_predict.flatten()) - Counter(y_valid.flatten())).elements()) + \
+        list((Counter(y_valid.flatten()) - Counter(y_predict.flatten())).elements()))
+
+    print(diff)
+    x, y = load_preprocessed_data(signal_1d_file)
+    misclassified_y = [ i for i, x in enumerate(y) if x in diff ]
+    misclassified_x = x[misclassified_y]
+    chunks = np.array_split(misclassified_x, samples)
+    plt.plot(np.linspace(0, 199, 200), misclassified_x.T)
+    plt.show()
     #for ch in chunks :
-    #    plt.plot(np.linspace(0, 199, 200), ch.T)
-    #    plt.show()
+        #plt.plot(np.linspace(0, 199, 200), ch.T)
+        #plt.show()
 
     
     ###########################################################################################################################

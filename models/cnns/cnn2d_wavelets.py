@@ -39,7 +39,7 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
     model.add(MaxPooling2D())  
     model.add(Flatten())
     
-    # 3 Full connected layer
+    # 3 Fully connected layers
     model.add(Dense(numclasses*1.25, activation = "relu", kernel_initializer = "he_normal"))
     model.add(Dense(numclasses*0.85, activation = "relu", kernel_initializer = "he_normal"))
     model.add(Dense(numclasses, activation = 'softmax'))
@@ -54,7 +54,7 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
         metrics=['accuracy'])
     
     # define callbacks
-    callbacks = [ModelCheckpoint(filepath='saved_models/wavelets_based.h5', monitor='categorical_crossentropy')]
+    callbacks = [ModelCheckpoint(filepath=saved_model_path, monitor='categorical_crossentropy')]
     
     # fit the model
     history = model.fit(x=x_train,

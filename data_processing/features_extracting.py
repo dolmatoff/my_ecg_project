@@ -31,8 +31,8 @@ def generate_features_csv(features_csv, data_dir, patient_ids):
 
     for patient_id in tqdm(patient_ids):
         try:
-            ecg_data = wfdb.rdsamp(os.path.join(data_dir, patient_id))
-            ecg_features.append(extract_features(ecg_data, ecg_id=patient_id)) #ecg_data[:,0]
+            ecg_data = wfdb.rdsamp(os.path.join(data_dir, patient_id))[0]
+            ecg_features.append(extract_features(ecg_data[:,0], ecg_id=patient_id))
         except:
             damaged_ecgs.append(patient_id)
             continue
@@ -81,8 +81,7 @@ def process_cpsc_data() :
             ecg_data, meta = wfdb.rdsamp(os.path.join(data_dir, patient_id)) # read all 12 leads data
 
             try:
-                p_data = ecg_data.transpose()
-                r = p_data[0,:] # take the first row (I lead)
+                r = ecg_data[:,0] # take the first row (I lead)
                 
                 # take the records longer or equal 15s 
                 if r.shape[0] >= 7500 and min(r) >= -1 and max(r) <= 1 :

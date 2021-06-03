@@ -2,10 +2,11 @@ import numpy as np
 import tensorflow.keras
 import pickle
 import sys
+import os
 import argparse
+import time
 
 from sklearn.metrics import confusion_matrix, classification_report
-
 from tensorflow.keras.utils import to_categorical
 import matplotlib.pyplot as plt
 
@@ -14,10 +15,11 @@ from models.cnns import cnn1d, cnn2d, cnn2d_2, cnn2d_wavelets
 from models.recurrent import lstm1d, lstm1d_2
 from models.predefined import inception1d, resnet1d
 
+
 #GLOBALS
 # numerical constants
 cpsc_num = 1145
-ptbxl_num = 6480
+ptbxl_num = 3490
 
 
 def parse_args():
@@ -28,14 +30,19 @@ def parse_args():
     parser.add_argument('--data-path', type=str, default='cpsc2018/', help='Preprocessed data directory')
     parser.add_argument('--data-1d-file', type=str, default='cpsc2018/cpsc_1145_25.pkl', help='1d data filename')
     parser.add_argument('--data-2d-file', type=str, default='cpsc2018/cpsc_1145_25_cwt.pkl', help='2d data filename')
-    parser.add_argument('--data-prefix', type=str, default='cwt', help='Prefix to distiguish between the sets of different dimensionality') #cwt
-    #parser.add_argument('--data-1d-file', type=str, default='ptb_xl_data/ptb_xl_6480_14.pkl', help='Data directory')
-    #parser.add_argument('--data-2d-file', type=str, default='ptb_xl_data/ptb_xl_6480_14_spectrograms.pkl', help='Data directory')
+    #parser.add_argument('--data-1d-file', type=str, default='ptb_xl_data/ptb_xl_3490_15.pkl', help='Data directory')
+    #parser.add_argument('--data-2d-file', type=str, default='ptb_xl_data/ptb_xl_3490_15_spectrograms.pkl', help='Data directory')
     
     parser.add_argument('--model-1d-name', type=str, default='resnet1d', help='Model name')
     parser.add_argument('--model-2d-name', type=str, default='cnn2d_wavelets', help='Model name')
+    parser.add_argument('--model-discr-name', type=str, default='discriminator_wavelets', help='Model name')
+
+    parser.add_argument('--data-prefix', type=str, default='cwt', help='Prefix to distiguish between the sets of different dimensionality') #cwt, 1d
     parser.add_argument('--dimension', type=int, default='2', help='Data dimension')
+
     return parser.parse_args()
+
+
 
 def get_based_parameters() :
     """
@@ -73,10 +80,23 @@ if __name__ == '__main__':
     y_valid_ = to_categorical(y_valid, numclasses)
 
     input_shape = ((x_train.shape[1], x_train.shape[2], 1) if (args.dimension == 2) else (x_train.shape[1], 1))
+
+    #################################################### DISCRIMINATOR
+    #from run_LOF import predict_LOF
+    #print(predict_LOF(x_train, x_test, x_valid, args.dimension))
+    #################################################### DISCRIMINATOR
+
+    from models.cnns.transfer_learning import train_existing_model
+    hist = train_existing_model()
+    
+
     # start training
+    t = time.time()
     model, history, x_valid = locals()[model_name].model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, \
         input_shape, saved_model_path)
+    print('Training time: %s' % (t - time.time()))
     
+
     # evaluate model on validation data
     print('Evaluation...')
     score = model.evaluate(x_valid, y_valid_, verbose=1)

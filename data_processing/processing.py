@@ -86,7 +86,7 @@ def load_train_test_data(path, prefix, filename) :
             _, train_valid_idx = rs_valid.split(y_row)
             _, train_test_idx = rs_test.split(y_row[train_valid_idx[0]])
 
-            x_valid = np.vstack((x_valid, x_row[train_valid_idx[1][0]]))
+            x_valid = np.vstack((x_valid, x_row[train_valid_idx[1]]))
             y_valid.append(y_row[train_valid_idx[1][0]])
             x_test = np.vstack((x_test, x_row[train_test_idx[1]]))
             y_test.extend(y_row[train_test_idx[1]])
@@ -207,10 +207,11 @@ def _cwt(data):
 
 if __name__ == '__main__' :
    
-    filename = 'ptb_xl_data/ptb_xl_75_25.pkl'
-    targetFilename = 'ptb_xl_data/ptb_xl_75_25_cwt.pkl'
+    filename = 'ptb_xl_data/ptb_xl_3490_15.pkl' #'cpsc2018/cpsc_1145_25_.pkl' #
+    targetFilename = 'ptb_xl_data/ptb_xl_3490_15_cwt.pkl' #'cpsc2018/cpsc_1145_25_cwt_.pkl' 
     
     x, y = load_preprocessed_data(filename)
+
     # convert 1d qrs segments to 2d spatial representation
     x_s = _cwt(x)
 
@@ -219,6 +220,5 @@ if __name__ == '__main__' :
         pickle.dump((x_s, y), f)
 
     #filter_qrs_ptb_xl() 
-
     #normalize_xy_data()
 
