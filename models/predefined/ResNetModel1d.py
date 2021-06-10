@@ -5,6 +5,7 @@ import pandas as pd
 np.random.seed(813306)
  
 def build_resnet(input_shape, n_feature_maps, nb_classes):
+    # 64 feature maps
     print ('build conv_x')
     x = keras.layers.Input(shape=(input_shape))
     conv_x = keras.layers.BatchNormalization()(x)
@@ -30,7 +31,8 @@ def build_resnet(input_shape, n_feature_maps, nb_classes):
     print ('Merging skip connection')
     y = keras.layers.Add()([shortcut_y, conv_z])
     y = keras.layers.Activation('relu')(y)
-     
+    
+    # 128 feature maps
     print ('build conv_x')
     x1 = y
     conv_x = keras.layers.Conv2D(n_feature_maps*2, 8, 1, padding='same')(x1)
@@ -55,7 +57,8 @@ def build_resnet(input_shape, n_feature_maps, nb_classes):
     print ('Merging skip connection')
     y = keras.layers.Add()([shortcut_y, conv_z])
     y = keras.layers.Activation('relu')(y)
-     
+    
+    # 128 feature maps
     print ('build conv_x')
     x1 = y
     conv_x = keras.layers.Conv2D(n_feature_maps*2, 8, 1, padding='same')(x1)

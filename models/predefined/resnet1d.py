@@ -36,6 +36,7 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
     model.compile(loss='categorical_crossentropy',
                   optimizer=optimizer,
                   metrics=['accuracy'])
+    print(model.summary())
 
     # define callbacks
     reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5,

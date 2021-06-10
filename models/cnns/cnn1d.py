@@ -27,7 +27,7 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
 
     x_train, x_test, x_valid = map(lambda x: get_transformed_input(x), [x_train, x_test, x_valid])
 
-    epochs = 250
+    epochs = 100
 
     model = Sequential()
 
@@ -47,11 +47,12 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
 
     model.summary()
 
-    model.compile(loss=keras.losses.categorical_crossentropy,
-                  optimizer=keras.optimizers.Adam(),
+    model.compile(loss='categorical_crossentropy',
+                  optimizer='adam',
                   metrics=['accuracy'])
 
-    callbacks = [ModelCheckpoint(filepath=saved_model_path, monitor='categorical_crossentropy')]
+    reduce_lr = tensorflow.keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50, min_lr=0.0001)
+    callbacks = [ModelCheckpoint(filepath=saved_model_path, monitor='categorical_crossentropy'), reduce_lr]
 
     history = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=epochs, verbose=1, callbacks = callbacks)
     

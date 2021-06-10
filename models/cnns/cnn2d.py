@@ -2,18 +2,19 @@ import numpy as np
 import tensorflow.keras
 import pickle
 import sys
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Lambda, Reshape
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, BatchNormalization, Activation, LSTM, Convolution2D, GRU
-from tensorflow.keras import optimizers, regularizers
-from tensorflow.keras.optimizers import SGD
-from tensorflow.keras.regularizers import l2
+import argparse
+from tensorflow.keras import backend as K
+from tensorflow.keras import layers as L
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras import optimizers, regularizers
+import tensorflow as tf
 
 
-def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape, saved_model_path):
+def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape, saved_model_path) :
     '''
-    load data, compile and train CNN model (CRNN architecture), apply data shape trasformation for ANN inputs
+    load data, compile and train CNN model, apply data shape trasformation for ANN inputs
     Parameters
     Input: 
         x_train, y_train - train data: qrs segments and labels
@@ -26,45 +27,38 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
         history - training history parameters
         x_valid - reshaped validation data
     '''
-    epochs = 550
+
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+    
+    epochs = 20
 
     x_train, x_test, x_valid = map(lambda x: get_transformed_input(x), [x_train, x_test, x_valid])
-    
-    model = Sequential()
 
-    model.add(Convolution2D(4, kernel_size=(5, 5), activation='elu', input_shape=input_shape, kernel_regularizer=regularizers.l2(0.0001)))
-    #model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(3, 3)))
-    model.add(BatchNormalization())
+    x = Input(name='the_input', shape=input_shape, dtype='float32')
 
-    model.add(Convolution2D(8, kernel_size=(3, 2), activation='elu', kernel_regularizer=regularizers.l2(0.0001)))
-    #model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(BatchNormalization())
+    c1 = L.Conv2D(4, (4, 4), activation='relu', padding='same')(x) #8
+    p1 = L.MaxPooling2D((2, 2))(c1)
 
-    model.add(Convolution2D(16, kernel_size=(1, 2), activation='elu', kernel_regularizer=regularizers.l2(0.0001)))
-    #model.add(BatchNormalization())
-    model.add(MaxPooling2D(pool_size=(1, 1)))
-    model.add(BatchNormalization())
-    
-    # CNN to RNN
-    model.add(Reshape(target_shape=((4, 16)), name='reshape'))
-    model.add(Dense(512, activation='elu', name='dense1'))
-    model.add(BatchNormalization())
+    c2 = L.Conv2D(8, (2, 2), activation='relu', padding='same')(c1) #13
+    p2 = L.MaxPooling2D((2, 2))(c2)
 
-    # RNN layer
-    model.add(GRU(512, return_sequences=True, kernel_initializer='he_normal'))
+    c3 = L.Conv2D(8, (2, 2), activation='relu', padding='same')(c2) #13
+    p3 = L.MaxPooling2D((2, 2))(c3)
 
-    model.add(Flatten())
-    model.add(Dropout(0.85))
+    fl = L.Flatten()(p3)
+    dr = L.Dropout(0.45)(fl)
+    dense = L.Dense(numclasses*1.5, activation = 'relu')(dr)
 
-    model.add(Dense(1500, activation='sigmoid', name='dense2'))
-    model.add(Dense(numclasses, activation='softmax', name='last_dense'))
+    output = L.Dense(numclasses, activation='softmax')(dense)
+
+    model = Model(inputs=[x], outputs=[output], name='ConvSpeechModel')
 
     model.summary()
 
-    model.compile(loss=keras.losses.categorical_crossentropy,
-                  optimizer=SGD(lr=0.001),
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=optimizers.Adam(learning_rate=0.001),
                   metrics=['accuracy'])
 
     callbacks = [ModelCheckpoint(filepath=saved_model_path, monitor='categorical_crossentropy')]
@@ -72,10 +66,12 @@ def model_fit(x_train, y_train, x_test, y_test, x_valid, numclasses, input_shape
     history = model.fit(x_train, y_train,
               validation_data=(x_test, y_test),
               epochs=epochs, 
-              verbose=1,
+              verbose=1, 
+              batch_size=8,
               callbacks = callbacks)
 
     return model, history, x_valid
+
 
 def get_transformed_input(x):
     return np.reshape(x, (x.shape[0], x.shape[1], x.shape[2], 1))

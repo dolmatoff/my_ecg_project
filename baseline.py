@@ -11,8 +11,8 @@ from tensorflow.keras.utils import to_categorical
 import matplotlib.pyplot as plt
 
 from data_processing.processing import *
-from models.cnns import cnn1d, cnn2d, cnn2d_2, cnn2d_wavelets
-from models.recurrent import lstm1d, lstm1d_2
+from models.cnns import cnn1d, cnn2d, crnn2d, cnn2d_lenet5
+from models.recurrent import lstm1d
 from models.predefined import inception1d, resnet1d
 
 
@@ -33,12 +33,11 @@ def parse_args():
     #parser.add_argument('--data-1d-file', type=str, default='ptb_xl_data/ptb_xl_3490_15.pkl', help='Data directory')
     #parser.add_argument('--data-2d-file', type=str, default='ptb_xl_data/ptb_xl_3490_15_spectrograms.pkl', help='Data directory')
     
-    parser.add_argument('--model-1d-name', type=str, default='resnet1d', help='Model name')
-    parser.add_argument('--model-2d-name', type=str, default='cnn2d_wavelets', help='Model name')
-    parser.add_argument('--model-discr-name', type=str, default='discriminator_wavelets', help='Model name')
+    parser.add_argument('--model-1d-name', type=str, default='resnet1d', help='1 dimensional model name')
+    parser.add_argument('--model-2d-name', type=str, default='cnn2d', help='2 dimensional model name') #cnn2d_wavelets
 
-    parser.add_argument('--data-prefix', type=str, default='cwt', help='Prefix to distiguish between the sets of different dimensionality') #cwt, 1d
-    parser.add_argument('--dimension', type=int, default='2', help='Data dimension')
+    parser.add_argument('--data-prefix', type=str, default='1d', help='Prefix to distiguish between the sets of different dimensionality') #cwt, 1d, spec
+    parser.add_argument('--dimension', type=int, default='1', help='Data dimension')
 
     return parser.parse_args()
 
@@ -86,8 +85,8 @@ if __name__ == '__main__':
     #print(predict_LOF(x_train, x_test, x_valid, args.dimension))
     #################################################### DISCRIMINATOR
 
-    from models.cnns.transfer_learning import train_existing_model
-    hist = train_existing_model()
+    #from models.cnns.transfer_learning import train_existing_model
+    #hist = train_existing_model()
     
 
     # start training
