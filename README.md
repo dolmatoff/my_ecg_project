@@ -10,7 +10,8 @@ The basic steps:
 # Data preprocessing
 In order to process data, we have to take only first lead from 12 leads and perform denoising, R-peaks detection algorithm, smoothing, normalization and balance classes.
 
-All preprocessed data used in this project are available at https://drive.google.com/file/d/1SiDIYOY-5xRVZVm0sfyXGbPQD7QGRggn/view?usp=sharing
+All preprocessed data used in this project are available at 
+https://drive.google.com/file/d/1SiDIYOY-5xRVZVm0sfyXGbPQD7QGRggn/view?usp=sharing
 Please, unpack them into project directory. Or if you want to reproduce all steps to get that, download and unpack raw data from the previous links and run 
 raw_data_processing.py script's methods.
 
