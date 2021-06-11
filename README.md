@@ -19,7 +19,7 @@ raw_data_processing.py script's methods.
 There are three types of ANNs were taken as classifiers: convolutional, recurrent, predefined. 
 In this case selected ANN acts as a feature extractor and a classifier: Softmax turns logits (numeric output of the last linear layer of a multi-class classification neural network) into probabilities by taking the exponents of each output and then normalize each number by the sum of those exponents so the entire output vector adds up to one — all probabilities should add up to one.
 
-The second problem is outliers detection. Unsupervised Outlier Detection using Local Outlier Factor (LOF) from sklearn library was tested for this purpose in run_FOF.py.
+The second problem is outlier detection. Unsupervised Outlier Detection using Local Outlier Factor (LOF) from sklearn library was tested for this purpose in run_FOF.py.
 
 You can run model training process from baseline.py script assigning required parameters or you can just rely on the previously saved models, but first download them at https://disk.yandex.ru/d/DNUI9EzwUtmmSQ  unpack and then execute run_saved_model.py script specifying the model's name and the appropriate dataset.
 If you have a GPU you can make use of its processing capability to improve the training step.
