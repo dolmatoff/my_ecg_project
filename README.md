@@ -21,11 +21,11 @@ In this case selected ANN acts as a feature extractor and a classifier: Softmax 
 
 The second problem is outlier detection. Unsupervised Outlier Detection using Local Outlier Factor (LOF) from sklearn library was tested for this purpose in run_FOF.py.
 
-You can run model training process from baseline.py script assigning required parameters or you can just rely on the previously saved models, but first download them at https://disk.yandex.ru/d/DNUI9EzwUtmmSQ  unpack and then execute run_saved_model.py script specifying the model's name and the appropriate dataset.
+You can run model training process from baseline.py script assigning required parameters or you can just rely on the previously saved models, but first download them at https://disk.yandex.ru/d/U-dlOLbFhTDXDw  unpack and then execute run_saved_model.py script specifying the model's name and the appropriate dataset.
 If you have a GPU you can make use of its processing capability to improve the training step.
 
 # Results
-The overall classification accuracy obtained using the CNN2D LeNet5 architecture was 95% on the validation set.
+The overall classification accuracy obtained using the CNN2D LeNet5 architecture was 95% on the validation set:
 |Accuracy  | Loss  | Training time | Epochs |
 | :--------| :---- | :------------ | -----: |
 |  95%     | 0.086 | 20 min        | 54     |
